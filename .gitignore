@@ -1,0 +1,12 @@
+# Ignorar node_modules (Next.js)
+ninotrainingFront/node_modules/
+ninotrainingFront/.env
+
+# Ignorar vendor y .env (Laravel)
+ninotrainingBack/vendor/
+ninotrainingBack/.env
+
+# Ignorar archivos de sistema
+.DS_Store
+# ignorar mysql
+mysql

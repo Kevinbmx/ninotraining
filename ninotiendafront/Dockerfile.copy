@@ -1,0 +1,37 @@
+# frontend/Dockerfile
+FROM node:18-alpine AS base
+
+# Instalar dependencias
+FROM base AS deps
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json package-lock.json* ./
+
+# Instalar dependencias con npm
+RUN \
+  if [ -f package-lock.json ]; then \
+    npm ci --no-audit --prefer-offline || \
+    (echo "Falló la instalación de dependencias. Reintentando..." && npm ci --no-audit --prefer-offline); \
+  else echo "Lockfile no encontrado." && exit 1; \
+  fi
+
+# Desarrollo
+FROM base AS dev
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+CMD ["npm", "run", "dev"]
+
+# Producción
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npm run build
+
+FROM base AS runner
+WORKDIR /app
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/.next/standalone ./
+COPY --from=builder /app/.next/static ./.next/static
+CMD ["node", "server.js"]
